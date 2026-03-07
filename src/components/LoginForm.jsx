@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { Lock, User, AlertCircle, LogIn } from 'lucide-react'
+import { loginUser } from '../utils/api'
+import { checkBackendHealth } from '../utils/healthCheck'
 
 export default function LoginForm({ onLoginSuccess, onBackToWelcome }) {
   const [credentials, setCredentials] = useState({
@@ -54,31 +56,57 @@ export default function LoginForm({ onLoginSuccess, onBackToWelcome }) {
     setIsLoading(true)
     setLoginError('')
     
-    // Simular delay de autenticación
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    // Buscar usuario en localStorage
-    const usersData = localStorage.getItem('warmi_users')
-    const users = usersData ? JSON.parse(usersData) : []
-    
-    const user = users.find(u => u.usuario === credentials.usuario)
-    
-    if (!user) {
-      setLoginError('No existe una cuenta con este número de documento')
+    try {
+      // Primero verificar que el backend esté disponible
+      console.log('🔍 Verificando conexión con el backend...')
+      const backendAvailable = await checkBackendHealth()
+      
+      if (!backendAvailable) {
+        throw new Error('El servidor backend no está disponible. Asegúrate de que esté ejecutándose en http://localhost:5000')
+      }
+      
+      console.log('✅ Backend disponible, procediendo con login...')
+      
+      // Llamar al backend para autenticar
+      const response = await loginUser(credentials.usuario, credentials.pin)
+      
+      // Verificar que la respuesta sea válida
+      if (!response || !response.success) {
+        throw new Error(response?.message || 'Respuesta inválida del servidor')
+      }
+      
+      // Guardar token en localStorage
+      if (response.token) {
+        localStorage.setItem('warmi_token', response.token)
+      }
+      
+      console.log('✅ Login exitoso')
+      
+      // Login exitoso
       setIsLoading(false)
-      return
-    }
-    
-    if (user.pin !== credentials.pin) {
-      setLoginError('PIN incorrecto. Por favor, verifica tu contraseña')
+      if (onLoginSuccess) {
+        onLoginSuccess(response.user)
+      }
+    } catch (error) {
       setIsLoading(false)
-      return
-    }
-    
-    // Login exitoso
-    setIsLoading(false)
-    if (onLoginSuccess) {
-      onLoginSuccess(user)
+      console.error('❌ Error en login:', error)
+      
+      // Mensajes de error más claros para el usuario
+      let errorMessage = 'Error al iniciar sesión'
+      
+      if (error.message.includes('backend') || error.message.includes('servidor')) {
+        errorMessage = '❌ No se pudo conectar con el servidor. Verifica que el backend esté ejecutándose en http://localhost:5000'
+      } else if (error.message.includes('conexión') || error.message.includes('internet')) {
+        errorMessage = '🌐 Problema de conexión. Verifica tu internet e intenta nuevamente.'
+      } else if (error.message.includes('timeout') || error.message.includes('tardó')) {
+        errorMessage = '⏱️ La conexión tardó demasiado. Intenta nuevamente.'
+      } else if (error.message.includes('incorrectos')) {
+        errorMessage = '🔐 CI o PIN incorrectos. Verifica tus credenciales.'
+      } else {
+        errorMessage = error.message || 'Error desconocido. Por favor intenta nuevamente.'
+      }
+      
+      setLoginError(errorMessage)
     }
   }
 

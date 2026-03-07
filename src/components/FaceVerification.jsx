@@ -210,6 +210,11 @@ export default function FaceVerification({ documentNumber, documentImage, onVeri
         const img1 = await createImageElement(documentFaceExtracted?.faceImage || documentImage)
         const img2 = await createImageElement(finalSelfie)
         
+        // Detectar rostro y obtener descriptor del selfie
+        const { detectFace } = await import('../utils/faceComparison')
+        const selfieDetection = await detectFace(img2)
+        const faceDescriptor = selfieDetection?.descriptor ? Array.from(selfieDetection.descriptor) : null
+        
         // Comparar rostros
         const comparisonResult = await compareFaces(img1, img2)
         setFaceComparisonResult(comparisonResult)
@@ -226,7 +231,8 @@ export default function FaceVerification({ documentNumber, documentImage, onVeri
               frames: capturedFrames,
               timestamp: new Date().toISOString(),
               faceComparison: comparisonResult,
-              verified: comparisonResult.success && comparisonResult.isMatch
+              verified: comparisonResult.success && comparisonResult.isMatch,
+              faceDescriptor: faceDescriptor
             })
           }
         }, 2000)
@@ -237,6 +243,12 @@ export default function FaceVerification({ documentNumber, documentImage, onVeri
       }
     } else {
       // Sin comparación (no hay imagen del documento o modelos no cargados)
+      // Capturar descriptor facial del selfie de todos modos
+      const img2 = await createImageElement(finalSelfie)
+      const { detectFace } = await import('../utils/faceComparison')
+      const selfieDetection = await detectFace(img2)
+      const faceDescriptor = selfieDetection?.descriptor ? Array.from(selfieDetection.descriptor) : null
+      
       setTimeout(() => {
         setCurrentStep('complete')
         setProgress(100)
@@ -248,7 +260,8 @@ export default function FaceVerification({ documentNumber, documentImage, onVeri
             frames: capturedFrames,
             timestamp: new Date().toISOString(),
             verified: true,
-            faceComparison: { success: false, error: 'No se pudo comparar con documento' }
+            faceComparison: { success: false, error: 'No se pudo comparar con documento' },
+            faceDescriptor: faceDescriptor
           })
         }
       }, 1000)

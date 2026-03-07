@@ -11,6 +11,15 @@ export default function RegisterForm({ documentNumber, onRegisterComplete }) {
   const [errors, setErrors] = useState({})
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  // Generar preview del username
+  const generarUsernamePreview = () => {
+    if (!formData.nombres || !formData.apellidos) return 'tunombre1234'
+    const primeraLetraNombre = formData.nombres.trim().charAt(0).toLowerCase()
+    const apellido = formData.apellidos.trim().split(' ')[0].toLowerCase().replace(/\s+/g, '')
+    const ultimosDigitosCI = documentNumber.slice(-4)
+    return `${primeraLetraNombre}${apellido}${ultimosDigitosCI}`
+  }
+
   const validateAge = (age) => {
     const ageNum = parseInt(age)
     return !isNaN(ageNum) && ageNum >= 18 && ageNum <= 120
@@ -91,9 +100,18 @@ export default function RegisterForm({ documentNumber, onRegisterComplete }) {
     setIsSubmitting(true)
     await new Promise(resolve => setTimeout(resolve, 1500))
     
+    // Generar username único a partir del nombre
+    // Formato: primera letra del nombre + apellido (sin espacios, lowercase) + últimos 4 dígitos del CI
+    const generarUsername = () => {
+      const primeraLetraNombre = formData.nombres.trim().charAt(0).toLowerCase()
+      const apellido = formData.apellidos.trim().split(' ')[0].toLowerCase() // Primer apellido
+      const ultimosDigitosCI = documentNumber.slice(-4) // Últimos 4 dígitos del CI
+      return `${primeraLetraNombre}${apellido}${ultimosDigitosCI}`
+    }
+    
     const userData = {
-      usuario: documentNumber,
-      documentNumber,
+      ci: documentNumber, // CI es el número del documento escaneado
+      usuario: generarUsername(), // Usuario es el nombre generado
       nombres: formData.nombres.trim(),
       apellidos: formData.apellidos.trim(),
       edad: parseInt(formData.edad),
@@ -143,14 +161,14 @@ export default function RegisterForm({ documentNumber, onRegisterComplete }) {
           <div className="relative">
             <input
               type="text"
-              value={documentNumber}
+              value={generarUsernamePreview()}
               disabled
-              className="w-full px-4 py-3 bg-gray-100 border-2 border-gray-300 rounded-xl font-mono font-bold text-gray-600 cursor-not-allowed"
+              className="w-full px-4 py-3 bg-gray-100 border-2 border-gray-300 rounded-xl font-mono text-gray-600 cursor-not-allowed"
             />
             <CheckCircle className="absolute right-3 top-3.5 w-5 h-5 text-green-500" />
           </div>
           <p className="text-xs text-gray-500 mt-1">
-            ✓ Tu usuario será tu número de documento
+            ✓ Generado automáticamente: @{generarUsernamePreview()}
           </p>
         </div>
 

@@ -77,7 +77,7 @@ export const register = async (req, res) => {
         ci: user.ci,
         nombres: user.nombres,
         apellidos: user.apellidos,
-        usuario: user.usuario,
+        usuario: user.usuario, // El username generado (ej: jperez1234)
         edad: user.edad,
         verificado: user.verificado
       }
@@ -135,7 +135,7 @@ export const login = async (req, res) => {
         nombres: user.nombres,
         apellidos: user.apellidos,
         nombre_completo: user.nombre_completo,
-        usuario: user.usuario,
+        usuario: user.usuario, // El username generado
         edad: user.edad,
         email: user.email,
         telefono: user.telefono,

@@ -6,6 +6,7 @@ import RegisterForm from '../components/RegisterForm'
 import LoginForm from '../components/LoginForm'
 import Dashboard from './Dashboard'
 import logoWarmi from '../assets/LogoWarmi.png'
+import { registerUser } from '../utils/api'
 
 export default function LoginPage({ onLoginSuccess }) {
   const [step, setStep] = useState('welcome')
@@ -23,14 +24,30 @@ export default function LoginPage({ onLoginSuccess }) {
     setStep('register')
   }
 
-  const handleRegisterComplete = (completeUserData) => {
-    const usersData = localStorage.getItem('warmi_users')
-    const users = usersData ? JSON.parse(usersData) : []
-    users.push(completeUserData)
-    localStorage.setItem('warmi_users', JSON.stringify(users))
-    
-    setRegisteredUser(completeUserData)
-    setStep('dashboard')
+  const handleRegisterComplete = async (completeUserData) => {
+    try {
+      // Combinar datos del formulario con datos de verificación facial
+      const fullUserData = {
+        ...completeUserData,
+        faceDescriptor: verificationData?.faceDescriptor || [],
+        faceImageUrl: verificationData?.selfie || null,
+        documentImageUrl: userData?.documentImage || null
+      }
+      
+      // Llamar al backend para registrar el usuario
+      const response = await registerUser(fullUserData)
+      
+      // Guardar token en localStorage
+      if (response.token) {
+        localStorage.setItem('warmi_token', response.token)
+      }
+      
+      setRegisteredUser(response.user)
+      setStep('dashboard')
+    } catch (error) {
+      console.error('Error al registrar usuario:', error)
+      alert(error.message || 'Error al registrar el usuario. Por favor, intenta de nuevo.')
+    }
   }
 
   const handleLoginSuccess = (user) => {

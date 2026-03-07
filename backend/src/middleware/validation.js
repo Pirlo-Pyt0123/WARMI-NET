@@ -27,7 +27,9 @@ export const validateRegister = [
     .matches(/^[a-zA-Z0-9_]+$/).withMessage('Usuario solo puede contener letras, números y guión bajo'),
   body('pin').notEmpty().withMessage('PIN es requerido')
     .isLength({ min: 4, max: 6 }).withMessage('PIN debe tener entre 4 y 6 dígitos'),
-  body('faceDescriptor').isArray().withMessage('Descriptor facial es requerido'),
+  body('faceDescriptor').optional().isArray().withMessage('Descriptor facial debe ser un array'),
+  body('faceImageUrl').optional().isString().withMessage('URL de imagen facial inválida'),
+  body('documentImageUrl').optional().isString().withMessage('URL de imagen de documento inválida'),
   handleValidationErrors
 ];
 

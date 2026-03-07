@@ -126,13 +126,15 @@ export default function Dashboard({ userData, onLogout }) {
                   <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
                     {userData.nombres.charAt(0)}{userData.apellidos.charAt(0)}
                   </div>
-                  <div>
-                    <h3 className="font-bold text-gray-800">{userData.nombreCompleto}</h3>
-                    <p className="text-xs text-gray-600">@{userData.usuario}</p>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-gray-800 text-base">
+                      {userData.nombres} {userData.apellidos}
+                    </h3>
+                    <p className="text-xs text-purple-600">@{userData.usuario}</p>
                   </div>
                 </div>
                 <div className="space-y-1 text-sm">
-                  <p className="text-gray-700"><strong>CI:</strong> {userData.documentNumber}</p>
+                  <p className="text-gray-700"><strong>CI:</strong> {userData.ci || userData.documentNumber}</p>
                   <p className="text-gray-700"><strong>Edad:</strong> {userData.edad} años</p>
                 </div>
               </div>
