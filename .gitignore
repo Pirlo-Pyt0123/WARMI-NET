@@ -16,9 +16,14 @@ dist-ssr
 .env
 .env.local
 .env.*.local
+backend/.env
 
 # Face-api models (demasiado grandes para git)
 public/models/
+
+# Backend uploads
+backend/uploads/
+backend/logs/
 
 # Editor directories and files
 .vscode/*
