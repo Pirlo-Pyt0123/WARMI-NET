@@ -2,7 +2,7 @@ import express from 'express';
 import {
   register,
   login,
-  verifyFace,
+  loginWithFace,
   getMe,
   updateProfile
 } from '../controllers/authController.js';
@@ -11,12 +11,12 @@ import { validateRegister, validateLogin } from '../middleware/validation.js';
 
 const router = express.Router();
 
-// Rutas públicas
+// ── Rutas públicas ─────────────────────────────────────────────
 router.post('/register', validateRegister, register);
 router.post('/login', validateLogin, login);
-router.post('/verify-face', verifyFace);
+router.post('/login-face', loginWithFace);   // Login con AWS Rekognition
 
-// Rutas protegidas
+// ── Rutas protegidas (requieren JWT) ──────────────────────────
 router.get('/me', authMiddleware, getMe);
 router.put('/profile', authMiddleware, updateProfile);
 

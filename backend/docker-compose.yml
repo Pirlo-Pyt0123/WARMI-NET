@@ -1,6 +1,10 @@
 version: '3.8'
 
 services:
+
+  # ─────────────────────────────────────────
+  # MySQL
+  # ─────────────────────────────────────────
   mysql:
     image: mysql:8.0
     container_name: warmi_mysql
@@ -22,6 +26,35 @@ services:
       timeout: 20s
       retries: 10
 
+  # ─────────────────────────────────────────
+  # LocalStack (S3 local gratis)
+  # ─────────────────────────────────────────
+  localstack:
+    image: localstack/localstack
+    container_name: warmi_localstack
+    restart: always
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3           # Solo S3 (Rekognition es Pro de pago)
+      - DEBUG=0
+      - DEFAULT_REGION=us-east-1
+      - PERSISTENCE=1         # Mantiene los datos entre reinicios
+    volumes:
+      - localstack_data:/var/lib/localstack
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./scripts/init-localstack.sh:/etc/localstack/init/ready.d/init-localstack.sh
+    networks:
+      - warmi_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ─────────────────────────────────────────
+  # Backend Node.js
+  # ─────────────────────────────────────────
   backend:
     build: .
     container_name: warmi_backend
@@ -29,15 +62,36 @@ services:
     ports:
       - "5000:5000"
     environment:
-      DB_HOST=mysql
-      DB_PORT=3306
-      DB_USER=warmi_user
-      DB_PASSWORD=warmi_pass_2026
-      DB_NAME=warmi_net
-      JWT_SECRET=warmi_super_secret_key_change_in_production_2026
-      NODE_ENV=development
+      # Base de datos
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: warmi_user
+      DB_PASSWORD: warmi_pass_2026
+      DB_NAME: warmi_net
+
+      # JWT
+      JWT_SECRET: warmi_super_secret_key_change_in_production_2026
+      JWT_EXPIRES_IN: 7d
+
+      # App
+      NODE_ENV: development
+      PORT: 5000
+
+      # AWS S3 → LocalStack (gratis, local)
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_REGION: us-east-1
+      AWS_S3_BUCKET: warmi-net-users
+      AWS_ENDPOINT: http://localstack:4566
+      AWS_LOCAL: "true"
+
+      # Rekognition → mock en desarrollo (ver awsService.js)
+      # En producción reemplazar con credenciales AWS reales
+
     depends_on:
       mysql:
+        condition: service_healthy
+      localstack:
         condition: service_healthy
     volumes:
       - .:/app
@@ -48,6 +102,7 @@ services:
 
 volumes:
   mysql_data:
+  localstack_data:
 
 networks:
   warmi_network:
