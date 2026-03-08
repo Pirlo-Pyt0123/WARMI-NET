@@ -3,14 +3,14 @@ import pool from '../config/database.js';
 class User {
   // Crear nuevo usuario
   static async create(userData) {
-    const { ci, nombres, apellidos, edad, usuario, pin, faceDescriptor, faceImageUrl, documentImageUrl } = userData;
-    
+    const { ci, nombres, apellidos, edad, usuario, pin, faceImageUrl, documentImageUrl } = userData;
+
     const [result] = await pool.execute(
-      `INSERT INTO users (ci, nombres, apellidos, edad, usuario, pin, face_descriptor, face_image_url, document_image_url, verificado) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)`,
-      [ci, nombres, apellidos, edad, usuario, pin, JSON.stringify(faceDescriptor), faceImageUrl, documentImageUrl]
+      `INSERT INTO users (ci, nombres, apellidos, edad, usuario, pin, face_image_url, document_image_url, verificado) 
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, TRUE)`,
+      [ci, nombres, apellidos, edad, usuario, pin, faceImageUrl, documentImageUrl]
     );
-    
+
     return result.insertId;
   }
 
@@ -62,7 +62,7 @@ class User {
   static async update(id, data) {
     const fields = [];
     const values = [];
-    
+
     if (data.telefono !== undefined) {
       fields.push('telefono = ?');
       values.push(data.telefono);
@@ -71,16 +71,16 @@ class User {
       fields.push('email = ?');
       values.push(data.email);
     }
-    
+
     if (fields.length === 0) return false;
-    
+
     values.push(id);
-    
+
     const [result] = await pool.execute(
       `UPDATE users SET ${fields.join(', ')} WHERE id = ?`,
       values
     );
-    
+
     return result.affectedRows > 0;
   }
 
